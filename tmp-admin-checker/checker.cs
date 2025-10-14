@@ -83,6 +83,16 @@ namespace tmp_admin_checker
             var result = new Dictionary<string, List<string>>();
             string currentRole = null;
 
+            var allowedRoles = new HashSet<string>
+    {
+        "Game Moderation Manager",
+        "Game Moderation Leader",
+        "Game Moderation Trainer",
+        "Game Moderator",
+        "Report Moderator",
+        "Game Moderation Trainee"
+    };
+
             foreach (var line in File.ReadAllLines(path))
             {
                 var trimmed = line.Trim();
@@ -94,10 +104,11 @@ namespace tmp_admin_checker
 
                 if (trimmed.StartsWith("https://truckersmp.com/user/"))
                 {
-                    if (currentRole != null)
+                    if (currentRole != null && allowedRoles.Contains(currentRole))
                     {
                         var idMatch = Regex.Match(trimmed, @"\/user\/(\d+)");
                         if (!idMatch.Success) continue;
+
                         string tmpid = idMatch.Groups[1].Value;
 
                         if (!result.ContainsKey(tmpid))
@@ -113,6 +124,7 @@ namespace tmp_admin_checker
                 }
             }
 
+            Console.WriteLine($"Loaded {result.Count} moderators from allowed roles.");
             return result;
         }
 
