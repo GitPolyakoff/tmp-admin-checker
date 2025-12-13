@@ -22,6 +22,7 @@ namespace tmp_admin_checker
         private Thread checkerThread;
         private string savePath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Desktop), "TMPCheckerPaths.txt");
         private string adminsFilePath = "";
+        private string adminMeetLogPath = "";
         private bool checkerStarted = false;
 
         public checker()
@@ -43,6 +44,10 @@ namespace tmp_admin_checker
                 await AdminUpdater.UpdateAdminsFile();
                 adminsFilePath = AdminUpdater.AdminsFilePath;
                 adminsById = LoadAdmins(adminsFilePath);
+                adminMeetLogPath = Path.Combine(
+                    Path.GetDirectoryName(adminsFilePath),
+                    "AdminMeetingsLog.txt"
+                );
 
                 this.Invoke(new Action(() =>
                 {
@@ -57,12 +62,19 @@ namespace tmp_admin_checker
 
                     if (string.IsNullOrEmpty(logPath) || !File.Exists(logPath))
                     {
-                        using (OpenFileDialog ofdLog = new OpenFileDialog())
+                        logPath = DetectSpawningLogPath();
+
+                        if (string.IsNullOrEmpty(logPath))
                         {
-                            ofdLog.Title = "Select log file";
-                            ofdLog.Filter = "Text files (*.txt)|*.txt";
-                            if (ofdLog.ShowDialog() != DialogResult.OK) return;
-                            logPath = ofdLog.FileName;
+                            MessageBox.Show(
+                                "Spawning log file was not found automatically.\n" +
+                                "Make sure TruckersMP logs exist.",
+                                "Error",
+                                MessageBoxButtons.OK,
+                                MessageBoxIcon.Error
+                            );
+                            checkerStarted = false;
+                            return;
                         }
                     }
 
@@ -128,6 +140,34 @@ namespace tmp_admin_checker
             return result;
         }
 
+        private void LogAdminMeeting(
+            string name,
+            string inGameId,
+            string tmpid,
+            string tag,
+            string roles)
+        {
+            try
+            {
+                string line =
+                    $"{DateTime.Now:yyyy-MM-dd HH:mm:ss} | " +
+                    $"{name} ({inGameId}) | " +
+                    $"TMPID: {tmpid} | " +
+                    $"Tag: {tag} | " +
+                    $"Roles: {roles}";
+
+                File.AppendAllText(
+                    adminMeetLogPath,
+                    line + Environment.NewLine
+                );
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Log write error: {ex.Message}");
+            }
+        }
+
+
         private void CheckLogs()
         {
             while (true)
@@ -153,6 +193,13 @@ namespace tmp_admin_checker
                             if (adminsById.ContainsKey(tmpid))
                             {
                                 var roles = string.Join(", ", adminsById[tmpid]);
+                                LogAdminMeeting(
+                                    displayName,
+                                    inGameId,
+                                    tmpid,
+                                    tag,
+                                    roles
+                                );
                                 ShowNotification("Admin nearby!", $"{displayName} ({inGameId})\nRoles: {roles}\nTag: {tag}");
                                 Console.WriteLine($"[ADMIN] {displayName} ({inGameId}) | Roles: {roles} | Tag: {tag}");
                             }
@@ -168,6 +215,55 @@ namespace tmp_admin_checker
 
                 Thread.Sleep(2000);
             }
+        }
+
+        private string DetectSpawningLogPath()
+        {
+            Console.WriteLine("🔍 Searching for spawning log automatically...");
+
+            var possiblePaths = new[]
+            {
+                Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), "ETS2MP", "logs"),
+                Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), "ATS2MP", "logs"),
+                $@"C:\Users\{Environment.UserName}\Documents\ETS2MP\logs",
+                $@"C:\Users\{Environment.UserName}\Documents\ATS2MP\logs",
+            };
+
+            foreach (var logDir in possiblePaths)
+            {
+                if (!Directory.Exists(logDir))
+                    continue;
+
+                var today = DateTime.Now;
+                var todayFile = $"log_spawning_{today:yyyy.MM.dd}_log.txt";
+                var todayPath = Path.Combine(logDir, todayFile);
+
+                if (File.Exists(todayPath))
+                {
+                    Console.WriteLine($"✅ Spawning log found: {todayPath}");
+                    return todayPath;
+                }
+
+                try
+                {
+                    var files = Directory.GetFiles(logDir, "log_spawning_*_log.txt")
+                        .OrderByDescending(File.GetLastWriteTime)
+                        .ToArray();
+
+                    if (files.Length > 0)
+                    {
+                        Console.WriteLine($"📄 Latest spawning log found: {files[0]}");
+                        return files[0];
+                    }
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"⚠️ Log scan error: {ex.Message}");
+                }
+            }
+
+            Console.WriteLine("❌ Spawning log not found automatically.");
+            return null;
         }
 
         private void ShowNotification(string title, string message)
@@ -227,6 +323,7 @@ namespace tmp_admin_checker
             Process.Start("https://discord.com/users/913793634376241192");
         }
     }
+
 
     public static class AdminUpdater
     {

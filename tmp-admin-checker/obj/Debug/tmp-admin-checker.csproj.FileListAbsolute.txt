@@ -15,7 +15,6 @@ C:\Users\Илья Поляков\Desktop\tmp-admin-checker\tmp-admin-checker\tmp
 C:\Users\Илья Поляков\Desktop\tmp-admin-checker\tmp-admin-checker\tmp-admin-checker\obj\Debug\tmp-admi.4F5A2950.Up2Date
 C:\Users\Илья Поляков\Desktop\tmp-admin-checker\tmp-admin-checker\tmp-admin-checker\obj\Debug\tmp-admin-checker.exe
 C:\Users\Илья Поляков\Desktop\tmp-admin-checker\tmp-admin-checker\tmp-admin-checker\obj\Debug\tmp-admin-checker.pdb
-C:\Users\Илья Поляков\Desktop\tmp-admin-checker\tmp-admin-checker\tmp-admin-checker\obj\Debug\tmp-admin-checker.exe.config
 C:\Users\Илья Поляков\Desktop\tmp-admin-checker\tmp-admin-checker\tmp-admin-checker\bin\Debug\AngleSharp.dll
 C:\Users\Илья Поляков\Desktop\tmp-admin-checker\tmp-admin-checker\tmp-admin-checker\bin\Debug\Costura.dll
 C:\Users\Илья Поляков\Desktop\tmp-admin-checker\tmp-admin-checker\tmp-admin-checker\bin\Debug\System.Buffers.dll
@@ -26,3 +25,4 @@ C:\Users\Илья Поляков\Desktop\tmp-admin-checker\tmp-admin-checker\tmp
 C:\Users\Илья Поляков\Desktop\tmp-admin-checker\tmp-admin-checker\tmp-admin-checker\bin\Debug\Tulpep.NotificationWindow.dll
 C:\Users\Илья Поляков\Desktop\tmp-admin-checker\tmp-admin-checker\tmp-admin-checker\bin\Debug\Costura.pdb
 C:\Users\Илья Поляков\Desktop\tmp-admin-checker\tmp-admin-checker\tmp-admin-checker\bin\Debug\Costura.xml
+C:\Users\Илья Поляков\Desktop\tmp-admin-checker\tmp-admin-checker\tmp-admin-checker\obj\Debug\tmp-admin-checker.exe.config

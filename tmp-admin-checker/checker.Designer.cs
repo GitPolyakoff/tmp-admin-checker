@@ -28,6 +28,7 @@
         /// </summary>
         private void InitializeComponent()
         {
+            System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(checker));
             this.Start = new System.Windows.Forms.Button();
             this.githubLink = new System.Windows.Forms.LinkLabel();
             this.steamLink = new System.Windows.Forms.LinkLabel();
@@ -152,8 +153,8 @@
             this.Controls.Add(this.tableLayoutPanel1);
             this.Controls.Add(this.Start);
             this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.FixedSingle;
+            this.Icon = ((System.Drawing.Icon)(resources.GetObject("$this.Icon")));
             this.MaximizeBox = false;
-            this.MinimizeBox = false;
             this.Name = "checker";
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
             this.Text = "TruckersMP Admin Checker by Polyakoff";
