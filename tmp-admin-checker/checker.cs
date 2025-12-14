@@ -170,50 +170,50 @@ namespace tmp_admin_checker
 
         private void CheckLogs()
         {
-            while (true)
+            try
             {
-                try
+                using (var fs = new FileStream(logPath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
+                using (var sr = new StreamReader(fs))
                 {
-                    var allLines = File.ReadAllLines(logPath);
-                    var lines = allLines.Skip(Math.Max(0, allLines.Length - 400)).ToList();
-
-                    foreach (var line in lines)
+                    string line;
+                    while (true)
                     {
-                        if (lastLines.Contains(line)) continue;
-
-                        var logMatch = Regex.Match(line, @"\((.+?)\((\d+)\)\s*-\s*TMPID:\s*(\d+)\s*-\s*SteamID64:\s*(\d+)\s*-\s*Tag:\s*(.*?)\)");
-                        if (logMatch.Success)
+                        while ((line = sr.ReadLine()) != null)
                         {
-                            string displayName = logMatch.Groups[1].Value.Trim();
-                            string inGameId = logMatch.Groups[2].Value.Trim();
-                            string tmpid = logMatch.Groups[3].Value.Trim();
-                            string steamId = logMatch.Groups[4].Value.Trim();
-                            string tag = logMatch.Groups[5].Value.Trim();
+                            if (lastLines.Contains(line)) continue;
 
-                            if (adminsById.ContainsKey(tmpid))
+                            var logMatch = Regex.Match(line, @"\((.+?)\((\d+)\)\s*-\s*TMPID:\s*(\d+)\s*-\s*SteamID64:\s*(\d+)\s*-\s*Tag:\s*(.*?)\)");
+                            if (logMatch.Success)
                             {
-                                var roles = string.Join(", ", adminsById[tmpid]);
-                                LogAdminMeeting(
-                                    displayName,
-                                    inGameId,
-                                    tmpid,
-                                    tag,
-                                    roles
-                                );
-                                ShowNotification("Admin nearby!", $"{displayName} ({inGameId})\nRoles: {roles}\nTag: {tag}");
-                                Console.WriteLine($"[ADMIN] {displayName} ({inGameId}) | Roles: {roles} | Tag: {tag}");
+                                string displayName = logMatch.Groups[1].Value.Trim();
+                                string inGameId = logMatch.Groups[2].Value.Trim();
+                                string tmpid = logMatch.Groups[3].Value.Trim();
+                                string tag = logMatch.Groups[5].Value.Trim();
+
+                                if (adminsById.ContainsKey(tmpid))
+                                {
+                                    var roles = string.Join(", ", adminsById[tmpid]);
+                                    LogAdminMeeting(displayName, inGameId, tmpid, tag, roles);
+                                    ShowNotification("Admin nearby!", $"{displayName} ({inGameId})\nRoles: {roles}\nTag: {tag}");
+                                    Console.WriteLine($"[ADMIN] {displayName} ({inGameId}) | Roles: {roles} | Tag: {tag}");
+                                }
                             }
+
+                            lastLines.Add(line);
+
+                            if (lastLines.Count > 1000)
+                                lastLines = lastLines.Skip(lastLines.Count - 500).ToHashSet();
                         }
+
+                        Thread.Sleep(500);
                     }
-
-                    lastLines = lines.ToHashSet();
                 }
-                catch (Exception ex)
-                {
-                    Console.WriteLine($"Error: {ex.Message}");
-                }
-
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error in CheckLogs: {ex.Message}");
                 Thread.Sleep(2000);
+                CheckLogs();
             }
         }
 
