@@ -3,7 +3,6 @@ TMP Admin Checker is a small program for **TruckersMP** (ETS2 / ATS). It helps y
 
 <div align="center">
   <img src="https://visitor-badge.laobi.icu/badge?page_id=GitPolyakoff.tmp-admin-checker" />
-  <img src="https://img.shields.io/badge/Downloads-37-blue?style=flat&logo=icloud" />
   <img src="https://img.shields.io/github/stars/GitPolyakoff/tmp-admin-checker?style=flat&logo=github&label=stars" />   
 </div>
 
