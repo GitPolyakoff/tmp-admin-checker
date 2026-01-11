@@ -1,5 +1,7 @@
 # TMP Admin Checker
-TMP Admin Checker is a small program for **TruckersMP** (ETS2 / ATS). It helps you detect admins near you in the game using game logs.
+
+TMP Admin Checker is a small tool for **TruckersMP (ETS2 / ATS)**.  
+It helps you detect **admins near you in-game** by reading TruckersMP log files in real time.
 
 <div align="center">
   <img src="https://visitor-badge.laobi.icu/badge?page_id=GitPolyakoff.tmp-admin-checker" />
@@ -9,43 +11,71 @@ TMP Admin Checker is a small program for **TruckersMP** (ETS2 / ATS). It helps y
 ---
 
 ## What it does
-- Automatically detects your TruckersMP game log file.
-- Reads TruckersMP game logs in real time.
-- Checks if any admins are online near you.
-- Shows desktop notifications when an admin appears nearby.
-- Creates a file on your desktop with a list of all admins from the official TruckersMP team page.
+
+- Automatically finds your TruckersMP **spawning log**.
+- Reads game logs in real time while you play.
+- Detects when **one or more admins** appear near you.
+- Shows **desktop popup notifications** when an admin is detected.
+- Plays a **continuous warning sound** while at least one admin is nearby.
+- Saves all detected admin encounters to a log file.
+- Automatically downloads and updates the **official TruckersMP admin list**.
+- Provides a **settings panel** to control sounds and notifications.
+
+---
+
+## Features
+
+- Popup notifications (can be enabled or disabled).
+- Popup notification sound (can be enabled or disabled).
+- Admin nearby sound (can be enabled or disabled).
+- Shows the **last detected admin** in the main window.
+- Sound keeps playing as long as **at least one admin is near you**.
+- Admin roles are verified using the **official TruckersMP team page**.
+
+> ⚠ The admin nearby sound detection is in **beta**.  
+> In some situations, the game may not log updates while the admin is standing still, which can affect detection timing.
+
+---
+
+## Files & storage
+
+All temporary files are stored in one folder: `Downloads\tmp-admin-checker`
+
+This folder contains:
+- `admins.txt` – list of all TruckersMP admins
+- `AdminMeetingsLog.txt` – history of detected admins
+
+These files are **automatically created, updated, and overwritten** when the program starts.  
+You no longer need to delete anything manually.
 
 ---
 
 ## How to use
-1. Download or clone the repository.
-2. Run the program file: `tmp-admin-checker.exe`.
-3. On first launch, the program will **automatically find your game log file**.
-4. The program will **create a file on your desktop** containing the list of all admins.
-5. The checker will start monitoring your logs and show notifications when an admin is nearby.
+
+1. Download the latest release from the **Releases** page.
+2. Start **TruckersMP**
+3. Run `tmp-admin-checker.exe`.
+4. Click **Start checker** in TMP Admin Checker.
+5. When an admin appears near you, you will see a popup and hear a sound.
 
 ---
 
-## Screenshot of a work example
-<img width="1129" height="748" alt="image" src="https://github.com/user-attachments/assets/339df06f-9563-4f33-8f21-a76a76ce0a41" />
+## Screenshots
+
+<img width="341" height="453" alt="image" src="https://github.com/user-attachments/assets/89af1572-15a1-47de-a608-f5f3926c8662" />
+
+<img width="601" height="278" alt="screen" src="https://github.com/user-attachments/assets/05f7c9fd-cf1a-48f1-b927-71dfda0866b2" />
 
 ---
 
 ## Notes
-- The **admin list is updated automatically** from the TruckersMP website.
-- Notifications include the **admin’s display name, in-game ID, roles, and tag**.
-- If automatic log detection fails, you can **manually set the log path** by editing the file on your desktop `TMPCheckerPaths.txt`.
+
+- It is recommended to start **TruckersMP first**, and only then launch **TMP Admin Checker**.
+- Admin data is loaded from the [official TruckersMP website](https://truckersmp.com/team).
+- All detection is based on **TruckersMP spawning logs**.
 
 ---
 
 ## Requirements
-- Windows 10 OS or higher
-- .NET Framework 4.7.2 or higher
-- Internet connection (to update the admin list)
-
----
-
-## Developer info
-
-- You can check the source code on GitHub: [tmp-admin-checker](https://github.com/GitPolyakoff/tmp-admin-checker)
-- Feel free to modify or improve the program.
+- **Windows 10 OS** or higher
+- **.NET Framework 4.7.2** [Download](https://dotnet.microsoft.com/en-us/download/dotnet-framework/net472)
