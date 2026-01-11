@@ -17,58 +17,75 @@ namespace tmp_admin_checker
     public partial class checker : Form
     {
         private Dictionary<string, List<string>> adminsById = new Dictionary<string, List<string>>();
+        private Dictionary<string, DateTime> adminsNearby = new Dictionary<string, DateTime>();
+        private HashSet<string> notifiedAdmins = new HashSet<string>();
         private HashSet<string> lastLines = new HashSet<string>();
+
+        private static readonly string AppFolder = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), "Downloads", "tmp-admin-checker");
+        private static readonly string AdminsPath = Path.Combine(AppFolder, "admins.txt");
+        private static readonly string AdminMeetingsPath = Path.Combine(AppFolder, "AdminMeetingsLog.txt");
+
         private string logPath = "";
         private Thread checkerThread;
-        private string savePath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Desktop), "TMPCheckerPaths.txt");
         private string adminsFilePath = "";
         private string adminMeetLogPath = "";
+        private string lastAdminInfo = "";
         private bool checkerStarted = false;
+
+        private SoundPlayer adminPlayer;
+        private bool adminSoundPlaying = false;
+        private DateTime lastAdminSeen = DateTime.MinValue;
+        private readonly TimeSpan adminPresenceTimeout = TimeSpan.FromSeconds(15);
+
+        private bool notificationSoundEnabled = true;
+        private bool notificationDisplayEnabled = true;
+        private bool adminSoundEnabled = true;
+
 
         public checker()
         {
             InitializeComponent();
-            Start.Click += Start_Click;
-            this.Controls.Add(Start);
+
+            notificationSoundButton.Checked = true;
+            notificationDisplayButton.Checked = true;
+            AdminSoundButton.Checked = true;
+
+            notificationSoundButton.CheckStateChanged += ToggleButtons_CheckStateChanged;
+            notificationDisplayButton.CheckStateChanged += ToggleButtons_CheckStateChanged;
+            AdminSoundButton.CheckStateChanged += ToggleButtons_CheckStateChanged;
+
+
+            adminPlayer = new SoundPlayer(Properties.Resources.sound_admin_nearby);
+
+            codeeloButton1.Click += codeeloButton1_Click;
+            codeeloGradientPanel1.Controls.Add(codeeloButton1);
 
             ShowNotification("Test Notification", "Program started successfully!");
         }
 
-        private void Start_Click(object sender, EventArgs e)
+        private void codeeloButton1_Click(object sender, EventArgs e)
         {
             if (checkerStarted) return;
             checkerStarted = true;
 
             Task.Run(async () =>
             {
+                Directory.CreateDirectory(AppFolder);
+
                 await AdminUpdater.UpdateAdminsFile();
-                adminsFilePath = AdminUpdater.AdminsFilePath;
+                adminsFilePath = AdminsPath;
                 adminsById = LoadAdmins(adminsFilePath);
-                adminMeetLogPath = Path.Combine(
-                    Path.GetDirectoryName(adminsFilePath),
-                    "AdminMeetingsLog.txt"
-                );
+                adminMeetLogPath = AdminMeetingsPath;
 
                 this.Invoke(new Action(() =>
                 {
-                    if (File.Exists(savePath))
-                    {
-                        var lines = File.ReadAllLines(savePath);
-                        if (lines.Length >= 2)
-                        {
-                            logPath = lines[1];
-                        }
-                    }
-
                     if (string.IsNullOrEmpty(logPath) || !File.Exists(logPath))
                     {
                         logPath = DetectSpawningLogPath();
-
                         if (string.IsNullOrEmpty(logPath))
                         {
                             MessageBox.Show(
-                                "Spawning log file was not found automatically.\n" +
-                                "Make sure TruckersMP logs exist.",
+                                "Spawning log file was not found automatically.\nMake sure TruckersMP logs exist.",
                                 "Error",
                                 MessageBoxButtons.OK,
                                 MessageBoxIcon.Error
@@ -77,9 +94,6 @@ namespace tmp_admin_checker
                             return;
                         }
                     }
-
-                    File.WriteAllLines(savePath, new string[] { adminsFilePath, logPath });
-                    MessageBox.Show($"Admins and log paths saved.", "Info", MessageBoxButtons.OK, MessageBoxIcon.Information);
 
                     checkerThread = new Thread(new ThreadStart(CheckLogs));
                     checkerThread.IsBackground = true;
@@ -96,14 +110,14 @@ namespace tmp_admin_checker
             string currentRole = null;
 
             var allowedRoles = new HashSet<string>
-    {
-        "Game Moderation Manager",
-        "Game Moderation Leader",
-        "Game Moderation Trainer",
-        "Game Moderator",
-        "Report Moderator",
-        "Game Moderation Trainee"
-    };
+            {
+                "Game Moderation Manager",
+                "Game Moderation Leader",
+                "Game Moderation Trainer",
+                "Game Moderator",
+                "Report Moderator",
+                "Game Moderation Trainee"
+            };
 
             foreach (var line in File.ReadAllLines(path))
             {
@@ -140,12 +154,7 @@ namespace tmp_admin_checker
             return result;
         }
 
-        private void LogAdminMeeting(
-            string name,
-            string inGameId,
-            string tmpid,
-            string tag,
-            string roles)
+        private void LogAdminMeeting(string name, string inGameId, string tmpid, string tag, string roles)
         {
             try
             {
@@ -156,17 +165,13 @@ namespace tmp_admin_checker
                     $"Tag: {tag} | " +
                     $"Roles: {roles}";
 
-                File.AppendAllText(
-                    adminMeetLogPath,
-                    line + Environment.NewLine
-                );
+                File.AppendAllText(adminMeetLogPath, line + Environment.NewLine);
             }
             catch (Exception ex)
             {
                 Console.WriteLine($"Log write error: {ex.Message}");
             }
         }
-
 
         private void CheckLogs()
         {
@@ -193,17 +198,32 @@ namespace tmp_admin_checker
                                 if (adminsById.ContainsKey(tmpid))
                                 {
                                     var roles = string.Join(", ", adminsById[tmpid]);
+
                                     LogAdminMeeting(displayName, inGameId, tmpid, tag, roles);
-                                    ShowNotification("Admin nearby!", $"{displayName} ({inGameId})\nRoles: {roles}\nTag: {tag}");
-                                    Console.WriteLine($"[ADMIN] {displayName} ({inGameId}) | Roles: {roles} | Tag: {tag}");
+
+                                    lastAdminInfo = $"{displayName} ({inGameId})";
+                                    UpdateLastAdminLabel();
+
+                                    adminsNearby[tmpid] = DateTime.Now;
+
+                                    if (!notifiedAdmins.Contains(tmpid))
+                                    {
+                                        ShowNotification("Admin nearby!", $"{displayName} ({inGameId})\nRoles: {roles}\nTag: {tag}");
+                                        notifiedAdmins.Add(tmpid);
+                                        Console.WriteLine($"[ADMIN] {displayName} ({inGameId}) | Roles: {roles} | Tag: {tag}");
+                                    }
+
+                                    if (adminSoundEnabled && !adminSoundPlaying)
+                                        PlayAdminNearbySound();
                                 }
                             }
 
                             lastLines.Add(line);
-
                             if (lastLines.Count > 1000)
                                 lastLines = lastLines.Skip(lastLines.Count - 500).ToHashSet();
                         }
+
+                        CheckAdminsTimeout();
 
                         Thread.Sleep(500);
                     }
@@ -214,6 +234,27 @@ namespace tmp_admin_checker
                 Console.WriteLine($"Error in CheckLogs: {ex.Message}");
                 Thread.Sleep(2000);
                 CheckLogs();
+            }
+        }
+
+        private void CheckAdminsTimeout()
+        {
+            var now = DateTime.Now;
+
+            var leftAdmins = adminsNearby
+                .Where(kv => now - kv.Value > adminPresenceTimeout)
+                .Select(kv => kv.Key)
+                .ToList();
+
+            foreach (var tmpid in leftAdmins)
+            {
+                adminsNearby.Remove(tmpid);
+                notifiedAdmins.Remove(tmpid);
+            }
+
+            if (adminsNearby.Count == 0 && adminSoundPlaying)
+            {
+                StopAdminNearbySound();
             }
         }
 
@@ -268,6 +309,9 @@ namespace tmp_admin_checker
 
         private void ShowNotification(string title, string message)
         {
+            if (!notificationDisplayEnabled)
+                return;
+
             if (this.InvokeRequired)
             {
                 this.Invoke(new Action(() => ShowNotification(title, message)));
@@ -295,11 +339,16 @@ namespace tmp_admin_checker
                 };
 
                 popupNotifier.Size = new System.Drawing.Size(400, 180);
-
                 popupNotifier.Popup();
 
-                SystemSounds.Hand.Play();
-                //SystemSounds.Asterisk.Play();
+                if (notificationSoundEnabled)
+                {
+                    using (var player = new SoundPlayer(Properties.Resources.notification_sound))
+                    {
+                        player.Play();
+                    }
+                }
+
                 Console.WriteLine($"[NOTIFY] {title}: {message}");
             }
             catch (Exception ex)
@@ -308,29 +357,76 @@ namespace tmp_admin_checker
             }
         }
 
-        private void githubLink_LinkClicked(object sender, LinkLabelLinkClickedEventArgs e)
+        private void PlayAdminNearbySound()
+        {
+            lastAdminSeen = DateTime.Now;
+            if (adminSoundPlaying || !adminSoundEnabled) return;
+
+            try
+            {
+                adminSoundPlaying = true;
+                adminPlayer.PlayLooping();
+                Console.WriteLine("[SOUND] Admin nearby sound started");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Admin sound error: {ex.Message}");
+            }
+        }
+
+        private void StopAdminNearbySound()
+        {
+            if (!adminSoundPlaying) return;
+
+            try
+            {
+                adminPlayer.Stop();
+                adminSoundPlaying = false;
+                Console.WriteLine("[SOUND] Admin nearby sound stopped");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Admin sound stop error: {ex.Message}");
+            }
+        }
+
+        private void UpdateLastAdminLabel()
+        {
+            if (lastAdminLabel.InvokeRequired)
+            {
+                lastAdminLabel.Invoke(new Action(UpdateLastAdminLabel));
+            }
+            else
+            {
+                lastAdminLabel.Text = $"{lastAdminInfo}";
+            }
+        }
+
+
+        private void linkLabel1_LinkClicked(object sender, LinkLabelLinkClickedEventArgs e)
         {
             Process.Start("https://github.com/GitPolyakoff");
         }
 
-        private void steamLink_LinkClicked(object sender, LinkLabelLinkClickedEventArgs e)
+        private void ToggleButtons_CheckStateChanged(object sender, EventArgs e)
         {
-            Process.Start("https://steamcommunity.com/profiles/76561199147759312/");
+            notificationSoundEnabled = notificationSoundButton.Checked;
+            notificationDisplayEnabled = notificationDisplayButton.Checked;
+            adminSoundEnabled = AdminSoundButton.Checked;
         }
 
-        private void discordLink_LinkClicked(object sender, LinkLabelLinkClickedEventArgs e)
-        {
-            Process.Start("https://discord.com/users/913793634376241192");
-        }
     }
-
 
     public static class AdminUpdater
     {
-        public static readonly string AdminsFilePath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Desktop), "admins.txt");
+        public static string AdminsFilePath;
 
         public static async Task UpdateAdminsFile()
         {
+            string appFolder = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), "Downloads", "tmp-admin-checker");
+            Directory.CreateDirectory(appFolder);
+            AdminsFilePath = Path.Combine(appFolder, "admins.txt");
+
             try
             {
                 var http = new HttpClient();
@@ -339,7 +435,6 @@ namespace tmp_admin_checker
                 var parser = new HtmlParser();
                 var doc = parser.ParseDocument(html);
 
-                //all role blocks
                 var roleSections = doc.QuerySelectorAll("div.headline-center");
 
                 if (roleSections.Length == 0)
@@ -357,7 +452,6 @@ namespace tmp_admin_checker
 
                         await writer.WriteLineAsync(roleName);
 
-                        //admin cards(sibling - .row.team-v4)
                         var adminRow = roleSection.NextElementSibling;
                         if (adminRow != null && adminRow.ClassList.Contains("row") && adminRow.ClassList.Contains("team-v4"))
                         {
@@ -368,7 +462,6 @@ namespace tmp_admin_checker
                                 if (link != null)
                                 {
                                     string fullUrl = link.GetAttribute("href");
-                                    //if the link is not complete
                                     if (!fullUrl.StartsWith("http"))
                                         fullUrl = "https://truckersmp.com" + fullUrl;
 
@@ -377,7 +470,7 @@ namespace tmp_admin_checker
                             }
                         }
 
-                        await writer.WriteLineAsync();//empty line between roles
+                        await writer.WriteLineAsync();
                     }
                 }
 
