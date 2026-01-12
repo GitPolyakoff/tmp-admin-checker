@@ -178,8 +178,7 @@
     <None Include="App.config" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="Resources\notification sound.wav" />
-    <None Include="Resources\sound admin nearby.wav" />
+    <None Include="Resources\notification_sound.wav" />
     <Content Include="изображение.ico" />
   </ItemGroup>
   <ItemGroup>

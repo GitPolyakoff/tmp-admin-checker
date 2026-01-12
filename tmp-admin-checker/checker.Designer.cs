@@ -30,10 +30,8 @@
         {
             System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(checker));
             this.codeeloGradientPanel1 = new CodeeloUI.Controls.CodeeloGradientPanel();
-            this.label5 = new System.Windows.Forms.Label();
             this.label6 = new System.Windows.Forms.Label();
             this.label7 = new System.Windows.Forms.Label();
-            this.AdminSoundButton = new CodeeloUI.Controls.CodeeloToggleButton();
             this.notificationDisplayButton = new CodeeloUI.Controls.CodeeloToggleButton();
             this.notificationSoundButton = new CodeeloUI.Controls.CodeeloToggleButton();
             this.lastAdminLabel = new System.Windows.Forms.Label();
@@ -56,10 +54,8 @@
             this.codeeloGradientPanel1.ColorBorderSecond = System.Drawing.Color.FromArgb(((int)(((byte)(21)))), ((int)(((byte)(152)))), ((int)(((byte)(255)))));
             this.codeeloGradientPanel1.ColorFillFirst = System.Drawing.Color.FromArgb(((int)(((byte)(3)))), ((int)(((byte)(233)))), ((int)(((byte)(172)))));
             this.codeeloGradientPanel1.ColorFillSecond = System.Drawing.Color.FromArgb(((int)(((byte)(21)))), ((int)(((byte)(152)))), ((int)(((byte)(255)))));
-            this.codeeloGradientPanel1.Controls.Add(this.label5);
             this.codeeloGradientPanel1.Controls.Add(this.label6);
             this.codeeloGradientPanel1.Controls.Add(this.label7);
-            this.codeeloGradientPanel1.Controls.Add(this.AdminSoundButton);
             this.codeeloGradientPanel1.Controls.Add(this.notificationDisplayButton);
             this.codeeloGradientPanel1.Controls.Add(this.notificationSoundButton);
             this.codeeloGradientPanel1.Controls.Add(this.lastAdminLabel);
@@ -77,17 +73,6 @@
             this.codeeloGradientPanel1.Name = "codeeloGradientPanel1";
             this.codeeloGradientPanel1.Size = new System.Drawing.Size(321, 403);
             this.codeeloGradientPanel1.TabIndex = 1;
-            // 
-            // label5
-            // 
-            this.label5.AutoSize = true;
-            this.label5.BackColor = System.Drawing.Color.Transparent;
-            this.label5.Font = new System.Drawing.Font("Comic Sans MS", 9.75F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(204)));
-            this.label5.Location = new System.Drawing.Point(78, 229);
-            this.label5.Name = "label5";
-            this.label5.Size = new System.Drawing.Size(188, 19);
-            this.label5.TabIndex = 21;
-            this.label5.Text = "Admin sound nearby (*beta)";
             // 
             // label6
             // 
@@ -110,24 +95,6 @@
             this.label7.Size = new System.Drawing.Size(172, 19);
             this.label7.TabIndex = 19;
             this.label7.Text = "Pop-up notification sound";
-            // 
-            // AdminSoundButton
-            // 
-            this.AdminSoundButton.AreaColor = System.Drawing.Color.FromArgb(((int)(((byte)(221)))), ((int)(((byte)(221)))), ((int)(((byte)(221)))));
-            this.AdminSoundButton.AreaColorChecked = System.Drawing.Color.FromArgb(((int)(((byte)(110)))), ((int)(((byte)(220)))), ((int)(((byte)(95)))));
-            this.AdminSoundButton.BackColor = System.Drawing.Color.Transparent;
-            this.AdminSoundButton.Checked = true;
-            this.AdminSoundButton.CheckState = System.Windows.Forms.CheckState.Checked;
-            this.AdminSoundButton.DrawCircle = true;
-            this.AdminSoundButton.Location = new System.Drawing.Point(12, 229);
-            this.AdminSoundButton.MinimumSize = new System.Drawing.Size(45, 22);
-            this.AdminSoundButton.Name = "AdminSoundButton";
-            this.AdminSoundButton.Size = new System.Drawing.Size(60, 22);
-            this.AdminSoundButton.TabIndex = 18;
-            this.AdminSoundButton.ToggleColor = System.Drawing.Color.FromArgb(((int)(((byte)(245)))), ((int)(((byte)(245)))), ((int)(((byte)(245)))));
-            this.AdminSoundButton.ToggleColorChecked = System.Drawing.Color.FromArgb(((int)(((byte)(245)))), ((int)(((byte)(245)))), ((int)(((byte)(245)))));
-            this.AdminSoundButton.UseTransparentBackColor = false;
-            this.AdminSoundButton.UseVisualStyleBackColor = false;
             // 
             // notificationDisplayButton
             // 
@@ -291,10 +258,8 @@
         private System.Windows.Forms.Label label1;
         private System.Windows.Forms.Label lastAdminLabel;
         private System.Windows.Forms.Label label3;
-        private System.Windows.Forms.Label label5;
         private System.Windows.Forms.Label label6;
         private System.Windows.Forms.Label label7;
-        private CodeeloUI.Controls.CodeeloToggleButton AdminSoundButton;
         private CodeeloUI.Controls.CodeeloToggleButton notificationDisplayButton;
         private CodeeloUI.Controls.CodeeloToggleButton notificationSoundButton;
     }

@@ -17,8 +17,6 @@ namespace tmp_admin_checker
     public partial class checker : Form
     {
         private Dictionary<string, List<string>> adminsById = new Dictionary<string, List<string>>();
-        private Dictionary<string, DateTime> adminsNearby = new Dictionary<string, DateTime>();
-        private HashSet<string> notifiedAdmins = new HashSet<string>();
         private HashSet<string> lastLines = new HashSet<string>();
 
         private static readonly string AppFolder = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), "Downloads", "tmp-admin-checker");
@@ -32,15 +30,8 @@ namespace tmp_admin_checker
         private string lastAdminInfo = "";
         private bool checkerStarted = false;
 
-        private SoundPlayer adminPlayer;
-        private bool adminSoundPlaying = false;
-        private DateTime lastAdminSeen = DateTime.MinValue;
-        private readonly TimeSpan adminPresenceTimeout = TimeSpan.FromSeconds(15);
-
         private bool notificationSoundEnabled = true;
         private bool notificationDisplayEnabled = true;
-        private bool adminSoundEnabled = true;
-
 
         public checker()
         {
@@ -48,14 +39,9 @@ namespace tmp_admin_checker
 
             notificationSoundButton.Checked = true;
             notificationDisplayButton.Checked = true;
-            AdminSoundButton.Checked = true;
 
             notificationSoundButton.CheckStateChanged += ToggleButtons_CheckStateChanged;
             notificationDisplayButton.CheckStateChanged += ToggleButtons_CheckStateChanged;
-            AdminSoundButton.CheckStateChanged += ToggleButtons_CheckStateChanged;
-
-
-            adminPlayer = new SoundPlayer(Properties.Resources.sound_admin_nearby);
 
             codeeloButton1.Click += codeeloButton1_Click;
             codeeloGradientPanel1.Controls.Add(codeeloButton1);
@@ -204,17 +190,12 @@ namespace tmp_admin_checker
                                     lastAdminInfo = $"{displayName} ({inGameId})";
                                     UpdateLastAdminLabel();
 
-                                    adminsNearby[tmpid] = DateTime.Now;
+                                    ShowNotification(
+                                        "Admin nearby!",
+                                        $"{displayName} ({inGameId})\nRoles: {roles}\nTag: {tag}"
+                                    );
 
-                                    if (!notifiedAdmins.Contains(tmpid))
-                                    {
-                                        ShowNotification("Admin nearby!", $"{displayName} ({inGameId})\nRoles: {roles}\nTag: {tag}");
-                                        notifiedAdmins.Add(tmpid);
-                                        Console.WriteLine($"[ADMIN] {displayName} ({inGameId}) | Roles: {roles} | Tag: {tag}");
-                                    }
-
-                                    if (adminSoundEnabled && !adminSoundPlaying)
-                                        PlayAdminNearbySound();
+                                    Console.WriteLine($"[ADMIN] {displayName} ({inGameId}) | Roles: {roles} | Tag: {tag}");
                                 }
                             }
 
@@ -222,8 +203,6 @@ namespace tmp_admin_checker
                             if (lastLines.Count > 1000)
                                 lastLines = lastLines.Skip(lastLines.Count - 500).ToHashSet();
                         }
-
-                        CheckAdminsTimeout();
 
                         Thread.Sleep(500);
                     }
@@ -234,27 +213,6 @@ namespace tmp_admin_checker
                 Console.WriteLine($"Error in CheckLogs: {ex.Message}");
                 Thread.Sleep(2000);
                 CheckLogs();
-            }
-        }
-
-        private void CheckAdminsTimeout()
-        {
-            var now = DateTime.Now;
-
-            var leftAdmins = adminsNearby
-                .Where(kv => now - kv.Value > adminPresenceTimeout)
-                .Select(kv => kv.Key)
-                .ToList();
-
-            foreach (var tmpid in leftAdmins)
-            {
-                adminsNearby.Remove(tmpid);
-                notifiedAdmins.Remove(tmpid);
-            }
-
-            if (adminsNearby.Count == 0 && adminSoundPlaying)
-            {
-                StopAdminNearbySound();
             }
         }
 
@@ -309,9 +267,6 @@ namespace tmp_admin_checker
 
         private void ShowNotification(string title, string message)
         {
-            if (!notificationDisplayEnabled)
-                return;
-
             if (this.InvokeRequired)
             {
                 this.Invoke(new Action(() => ShowNotification(title, message)));
@@ -320,26 +275,29 @@ namespace tmp_admin_checker
 
             try
             {
-                var popupNotifier = new PopupNotifier
+                if (notificationDisplayEnabled)
                 {
-                    TitleText = title,
-                    ContentText = message,
-                    IsRightToLeft = false,
-                    Delay = 5000,
-                    TitleColor = System.Drawing.Color.White,
-                    ContentColor = System.Drawing.Color.WhiteSmoke,
-                    BodyColor = System.Drawing.Color.FromArgb(45, 55, 72),
-                    BorderColor = System.Drawing.Color.FromArgb(100, 149, 237),
-                    TitleFont = new System.Drawing.Font("Segoe UI Semibold", 12, System.Drawing.FontStyle.Bold),
-                    ContentFont = new System.Drawing.Font("Segoe UI", 10, System.Drawing.FontStyle.Regular),
-                    GradientPower = 50,
-                    HeaderHeight = 30,
-                    ContentPadding = new System.Windows.Forms.Padding(15),
-                    Image = null
-                };
+                    var popupNotifier = new PopupNotifier
+                    {
+                        TitleText = title,
+                        ContentText = message,
+                        IsRightToLeft = false,
+                        Delay = 5000,
+                        TitleColor = System.Drawing.Color.White,
+                        ContentColor = System.Drawing.Color.WhiteSmoke,
+                        BodyColor = System.Drawing.Color.FromArgb(45, 55, 72),
+                        BorderColor = System.Drawing.Color.FromArgb(100, 149, 237),
+                        TitleFont = new System.Drawing.Font("Segoe UI Semibold", 12, System.Drawing.FontStyle.Bold),
+                        ContentFont = new System.Drawing.Font("Segoe UI", 10, System.Drawing.FontStyle.Regular),
+                        GradientPower = 50,
+                        HeaderHeight = 30,
+                        ContentPadding = new Padding(15),
+                        Image = null
+                    };
 
-                popupNotifier.Size = new System.Drawing.Size(400, 180);
-                popupNotifier.Popup();
+                    popupNotifier.Size = new System.Drawing.Size(400, 180);
+                    popupNotifier.Popup();
+                }
 
                 if (notificationSoundEnabled)
                 {
@@ -357,39 +315,6 @@ namespace tmp_admin_checker
             }
         }
 
-        private void PlayAdminNearbySound()
-        {
-            lastAdminSeen = DateTime.Now;
-            if (adminSoundPlaying || !adminSoundEnabled) return;
-
-            try
-            {
-                adminSoundPlaying = true;
-                adminPlayer.PlayLooping();
-                Console.WriteLine("[SOUND] Admin nearby sound started");
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"Admin sound error: {ex.Message}");
-            }
-        }
-
-        private void StopAdminNearbySound()
-        {
-            if (!adminSoundPlaying) return;
-
-            try
-            {
-                adminPlayer.Stop();
-                adminSoundPlaying = false;
-                Console.WriteLine("[SOUND] Admin nearby sound stopped");
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"Admin sound stop error: {ex.Message}");
-            }
-        }
-
         private void UpdateLastAdminLabel()
         {
             if (lastAdminLabel.InvokeRequired)
@@ -402,7 +327,6 @@ namespace tmp_admin_checker
             }
         }
 
-
         private void linkLabel1_LinkClicked(object sender, LinkLabelLinkClickedEventArgs e)
         {
             Process.Start("https://github.com/GitPolyakoff");
@@ -412,9 +336,7 @@ namespace tmp_admin_checker
         {
             notificationSoundEnabled = notificationSoundButton.Checked;
             notificationDisplayEnabled = notificationDisplayButton.Checked;
-            adminSoundEnabled = AdminSoundButton.Checked;
         }
-
     }
 
     public static class AdminUpdater

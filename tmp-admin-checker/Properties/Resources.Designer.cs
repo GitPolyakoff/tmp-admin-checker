@@ -68,14 +68,5 @@ namespace tmp_admin_checker.Properties {
                 return ResourceManager.GetStream("notification_sound", resourceCulture);
             }
         }
-        
-        /// <summary>
-        ///   Поиск локализованного ресурса типа System.IO.UnmanagedMemoryStream, аналогичного System.IO.MemoryStream.
-        /// </summary>
-        internal static System.IO.UnmanagedMemoryStream sound_admin_nearby {
-            get {
-                return ResourceManager.GetStream("sound_admin_nearby", resourceCulture);
-            }
-        }
     }
 }
