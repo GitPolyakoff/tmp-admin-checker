@@ -16,7 +16,6 @@ It helps you detect **admins near you in-game** by reading TruckersMP log files 
 - Reads game logs in real time while you play.
 - Detects when **one or more admins** appear near you.
 - Shows **desktop popup notifications** when an admin is detected.
-- Plays a **continuous warning sound** while at least one admin is nearby.
 - Saves all detected admin encounters to a log file.
 - Automatically downloads and updates the **official TruckersMP admin list**.
 - Provides a **settings panel** to control sounds and notifications.
@@ -27,13 +26,8 @@ It helps you detect **admins near you in-game** by reading TruckersMP log files 
 
 - Popup notifications (can be enabled or disabled).
 - Popup notification sound (can be enabled or disabled).
-- Admin nearby sound (can be enabled or disabled).
 - Shows the **last detected admin** in the main window.
-- Sound keeps playing as long as **at least one admin is near you**.
 - Admin roles are verified using the **official TruckersMP team page**.
-
-> ⚠ The admin nearby sound detection is in **beta**.  
-> In some situations, the game may not log updates while the admin is standing still, which can affect detection timing.
 
 ---
 
@@ -56,13 +50,13 @@ You no longer need to delete anything manually.
 2. Start **TruckersMP**
 3. Run `tmp-admin-checker.exe`.
 4. Click **Start checker** in TMP Admin Checker.
-5. When an admin appears near you, you will see a popup and hear a sound.
+5. When an admin appears near you, you will see a popup notification (and optional sound).
 
 ---
 
 ## Screenshots
 
-<img width="341" height="453" alt="image" src="https://github.com/user-attachments/assets/89af1572-15a1-47de-a608-f5f3926c8662" />
+<img width="344" height="451" alt="image" src="https://github.com/user-attachments/assets/024e0863-2ec0-4a0c-aec4-0f8206998a03" />
 
 <img width="601" height="278" alt="screen" src="https://github.com/user-attachments/assets/05f7c9fd-cf1a-48f1-b927-71dfda0866b2" />
 
