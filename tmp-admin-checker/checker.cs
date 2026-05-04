@@ -19,9 +19,10 @@ namespace tmp_admin_checker
         private Dictionary<string, List<string>> adminsById = new Dictionary<string, List<string>>();
         private HashSet<string> lastLines = new HashSet<string>();
 
-        private static readonly string AppFolder = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), "Downloads", "tmp-admin-checker");
+        private static readonly string AppFolder = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "tmp-admin-checker");
         private static readonly string AdminsPath = Path.Combine(AppFolder, "admins.txt");
         private static readonly string AdminMeetingsPath = Path.Combine(AppFolder, "AdminMeetingsLog.txt");
+        private static readonly string ConfigPath = Path.Combine(AppFolder, "config.txt");
 
         private string logPath = "";
         private Thread checkerThread;
@@ -166,14 +167,20 @@ namespace tmp_admin_checker
                 using (var fs = new FileStream(logPath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
                 using (var sr = new StreamReader(fs))
                 {
+                    fs.Seek(0, SeekOrigin.End);
+
                     string line;
                     while (true)
                     {
                         while ((line = sr.ReadLine()) != null)
                         {
+                            // 1. БЫСТРЫЙ ФИЛЬТР: Отсекаем 99% лишних строк (очень сильно экономит CPU)
+                            if (!line.Contains("TMPID:")) continue;
+
                             if (lastLines.Contains(line)) continue;
 
-                            var logMatch = Regex.Match(line, @"\((.+?)\((\d+)\)\s*-\s*TMPID:\s*(\d+)\s*-\s*SteamID64:\s*(\d+)\s*-\s*Tag:\s*(.*?)\)");
+                            var logMatch = Regex.Match(line, @"\((.*)\(([^)]+)\)\s*-\s*TMPID:\s*(\d+)\s*-\s*SteamID64:\s*(\d+)\s*-\s*Tag:\s*(.*?)\)");
+
                             if (logMatch.Success)
                             {
                                 string displayName = logMatch.Groups[1].Value.Trim();
@@ -204,7 +211,8 @@ namespace tmp_admin_checker
                                 lastLines = lastLines.Skip(lastLines.Count - 500).ToHashSet();
                         }
 
-                        Thread.Sleep(500);
+                        // 2. БЫСТРЫЙ ОТКЛИК: Ждем всего 100 мс вместо 500 мс
+                        Thread.Sleep(100);
                     }
                 }
             }
@@ -218,50 +226,90 @@ namespace tmp_admin_checker
 
         private string DetectSpawningLogPath()
         {
-            Console.WriteLine("🔍 Searching for spawning log automatically...");
+            Console.WriteLine("🔍 Searching for spawning log...");
 
-            var possiblePaths = new[]
+            // 1. Проверяем сохраненный путь с прошлого раза
+            if (File.Exists(ConfigPath))
             {
-                Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), "ETS2MP", "logs"),
-                Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), "ATS2MP", "logs"),
-                $@"C:\Users\{Environment.UserName}\Documents\ETS2MP\logs",
-                $@"C:\Users\{Environment.UserName}\Documents\ATS2MP\logs",
-            };
-
-            foreach (var logDir in possiblePaths)
-            {
-                if (!Directory.Exists(logDir))
-                    continue;
-
-                var today = DateTime.Now;
-                var todayFile = $"log_spawning_{today:yyyy.MM.dd}_log.txt";
-                var todayPath = Path.Combine(logDir, todayFile);
-
-                if (File.Exists(todayPath))
+                string savedDir = File.ReadAllText(ConfigPath).Trim();
+                if (Directory.Exists(savedDir))
                 {
-                    Console.WriteLine($"✅ Spawning log found: {todayPath}");
-                    return todayPath;
-                }
-
-                try
-                {
-                    var files = Directory.GetFiles(logDir, "log_spawning_*_log.txt")
-                        .OrderByDescending(File.GetLastWriteTime)
-                        .ToArray();
-
-                    if (files.Length > 0)
-                    {
-                        Console.WriteLine($"📄 Latest spawning log found: {files[0]}");
-                        return files[0];
-                    }
-                }
-                catch (Exception ex)
-                {
-                    Console.WriteLine($"⚠️ Log scan error: {ex.Message}");
+                    string logFromConfig = FindLatestLogInDirectory(savedDir);
+                    if (logFromConfig != null) return logFromConfig;
                 }
             }
 
-            Console.WriteLine("❌ Spawning log not found automatically.");
+            // 2. Стандартный авто-поиск в Документах
+            var possiblePaths = new[]
+            {
+        Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), "ETS2MP", "logs"),
+        Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), "ATS2MP", "logs")
+    };
+
+            foreach (var logDir in possiblePaths)
+            {
+                string foundLog = FindLatestLogInDirectory(logDir);
+                if (foundLog != null)
+                {
+                    // Запоминаем папку на будущее
+                    File.WriteAllText(ConfigPath, logDir);
+                    return foundLog;
+                }
+            }
+
+            // 3. Если ничего не помогло - просим пользователя выбрать файл вручную
+            Console.WriteLine("❌ Spawning log not found automatically. Asking user...");
+            string manualPath = null;
+
+            using (OpenFileDialog ofd = new OpenFileDialog())
+            {
+                ofd.Title = "Выберите файл лога (log_spawning_..._log.txt)";
+                ofd.Filter = "Text files (*.txt)|*.txt|All files (*.*)|*.*";
+
+                if (ofd.ShowDialog() == DialogResult.OK)
+                {
+                    manualPath = ofd.FileName;
+                    // Сохраняем ПАПКУ, в которой лежит этот лог, чтобы завтра программа сама нашла свежий лог
+                    string selectedDir = Path.GetDirectoryName(manualPath);
+                    File.WriteAllText(ConfigPath, selectedDir);
+                }
+            }
+
+            return manualPath;
+        }
+
+        // Вспомогательный метод, чтобы не дублировать код поиска по дате
+        private string FindLatestLogInDirectory(string logDir)
+        {
+            if (!Directory.Exists(logDir)) return null;
+
+            var today = DateTime.Now;
+            var todayFile = $"log_spawning_{today:yyyy.MM.dd}_log.txt";
+            var todayPath = Path.Combine(logDir, todayFile);
+
+            if (File.Exists(todayPath))
+            {
+                Console.WriteLine($"✅ Spawning log found: {todayPath}");
+                return todayPath;
+            }
+
+            try
+            {
+                var files = Directory.GetFiles(logDir, "log_spawning_*_log.txt")
+                    .OrderByDescending(File.GetLastWriteTime)
+                    .ToArray();
+
+                if (files.Length > 0)
+                {
+                    Console.WriteLine($"📄 Latest spawning log found: {files[0]}");
+                    return files[0];
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"⚠️ Log scan error in {logDir}: {ex.Message}");
+            }
+
             return null;
         }
 
@@ -345,7 +393,7 @@ namespace tmp_admin_checker
 
         public static async Task UpdateAdminsFile()
         {
-            string appFolder = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), "Downloads", "tmp-admin-checker");
+            string appFolder = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "tmp-admin-checker");
             Directory.CreateDirectory(appFolder);
             AdminsFilePath = Path.Combine(appFolder, "admins.txt");
 
