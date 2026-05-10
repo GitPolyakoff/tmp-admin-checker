@@ -12,8 +12,8 @@ It helps you detect **admins near you in-game** by reading TruckersMP log files 
 
 ## What it does
 
-- Automatically finds your TruckersMP **spawning log**.
-- Reads game logs in real time while you play.
+- Automatically finds your TruckersMP **spawning log** (or allows manual selection if installed in a custom location).
+- Reads game logs in real time while you play, without repeating old data.
 - Detects when **one or more admins** appear near you.
 - Shows **desktop popup notifications** when an admin is detected.
 - Saves all detected admin encounters to a log file.
@@ -24,6 +24,8 @@ It helps you detect **admins near you in-game** by reading TruckersMP log files 
 
 ## Features
 
+- Fully supports **all servers**, including standard Simulation and special **Event Servers**.
+- Lightning-fast detection with optimized CPU usage.
 - Popup notifications (can be enabled or disabled).
 - Popup notification sound (can be enabled or disabled).
 - Shows the **last detected admin** in the main window.
@@ -33,14 +35,16 @@ It helps you detect **admins near you in-game** by reading TruckersMP log files 
 
 ## Files & storage
 
-All temporary files are stored in one folder: `Downloads\tmp-admin-checker`
+All temporary and configuration files are securely stored in the Windows Application Data folder: 
+`%appdata%\tmp-admin-checker`
 
 This folder contains:
 - `admins.txt` – list of all TruckersMP admins
 - `AdminMeetingsLog.txt` – history of detected admins
+- `config.txt` – saves the path to your log files if selected manually
 
 These files are **automatically created, updated, and overwritten** when the program starts.  
-You no longer need to delete anything manually.
+You no longer need to delete anything manually, and they won't clutter your personal folders.
 
 ---
 
