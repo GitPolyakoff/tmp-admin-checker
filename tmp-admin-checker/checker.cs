@@ -98,7 +98,24 @@ namespace tmp_admin_checker
 
             var allowedRoles = new HashSet<string>
             {
+                "Game Producer",
+                "Game Developer",
+                "DevOps",
+                "Web Developer",
+                "Project Manager",
+                "Vice Project Manager",
+                "Business Analyst",
+                "Senior Community Manager",
+                "Senior Game Moderation Manager",
+                "Senior Event Manager",
+                "Community Manager",
+                "Community Moderation Manager",
                 "Game Moderation Manager",
+                "Support Manager",
+                "Add-On Manager",
+                "Event Manager",
+                "Media Manager",
+                "Translation Manager",
                 "Game Moderation Leader",
                 "Game Moderation Trainer",
                 "Game Moderator",
@@ -174,7 +191,6 @@ namespace tmp_admin_checker
                     {
                         while ((line = sr.ReadLine()) != null)
                         {
-                            // 1. БЫСТРЫЙ ФИЛЬТР: Отсекаем 99% лишних строк (очень сильно экономит CPU)
                             if (!line.Contains("TMPID:")) continue;
 
                             if (lastLines.Contains(line)) continue;
@@ -210,8 +226,6 @@ namespace tmp_admin_checker
                             if (lastLines.Count > 1000)
                                 lastLines = lastLines.Skip(lastLines.Count - 500).ToHashSet();
                         }
-
-                        // 2. БЫСТРЫЙ ОТКЛИК: Ждем всего 100 мс вместо 500 мс
                         Thread.Sleep(100);
                     }
                 }
@@ -228,7 +242,6 @@ namespace tmp_admin_checker
         {
             Console.WriteLine("🔍 Searching for spawning log...");
 
-            // 1. Проверяем сохраненный путь с прошлого раза
             if (File.Exists(ConfigPath))
             {
                 string savedDir = File.ReadAllText(ConfigPath).Trim();
@@ -239,7 +252,6 @@ namespace tmp_admin_checker
                 }
             }
 
-            // 2. Стандартный авто-поиск в Документах
             var possiblePaths = new[]
             {
         Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), "ETS2MP", "logs"),
@@ -251,13 +263,11 @@ namespace tmp_admin_checker
                 string foundLog = FindLatestLogInDirectory(logDir);
                 if (foundLog != null)
                 {
-                    // Запоминаем папку на будущее
                     File.WriteAllText(ConfigPath, logDir);
                     return foundLog;
                 }
             }
 
-            // 3. Если ничего не помогло - просим пользователя выбрать файл вручную
             Console.WriteLine("❌ Spawning log not found automatically. Asking user...");
             string manualPath = null;
 
@@ -269,7 +279,6 @@ namespace tmp_admin_checker
                 if (ofd.ShowDialog() == DialogResult.OK)
                 {
                     manualPath = ofd.FileName;
-                    // Сохраняем ПАПКУ, в которой лежит этот лог, чтобы завтра программа сама нашла свежий лог
                     string selectedDir = Path.GetDirectoryName(manualPath);
                     File.WriteAllText(ConfigPath, selectedDir);
                 }
@@ -278,7 +287,6 @@ namespace tmp_admin_checker
             return manualPath;
         }
 
-        // Вспомогательный метод, чтобы не дублировать код поиска по дате
         private string FindLatestLogInDirectory(string logDir)
         {
             if (!Directory.Exists(logDir)) return null;
